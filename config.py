@@ -1,0 +1,3 @@
+TOKEN = "SEU_TOKEN_DO_BOT"
+
+BOT_NAME = "SenpaiBot"
