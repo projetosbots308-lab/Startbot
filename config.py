@@ -1,3 +1,3 @@
-TOKEN = "SEU_TOKEN_DO_BOT"
+import os
 
-BOT_NAME = "SenpaiBot"
+TOKEN = os.getenv("BOT_TOKEN")
