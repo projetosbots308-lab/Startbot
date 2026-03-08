@@ -23,9 +23,5 @@ app.add_handler(CommandHandler("ban", ban))
 app.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, welcome))
 
 
-app.run_polling()
-
-import asyncio
-
 if __name__ == "__main__":
-    asyncio.run(app.run_polling())
+    app.run_polling()
