@@ -1,27 +1,14 @@
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters
+from telegram.ext import ApplicationBuilder, CommandHandler
 
-import config
+import os
 
-from modules.start import start
-from modules.welcome import welcome
-from modules.anime import anime
-from modules.manga import manga
-from modules.season import season
-from modules.moderation import ban
+TOKEN = os.getenv("BOT_TOKEN")
 
+async def start(update, context):
+    await update.message.reply_text("Bot funcionando!")
 
-app = ApplicationBuilder().token(config.TOKEN).build()
-
+app = ApplicationBuilder().token(TOKEN).build()
 
 app.add_handler(CommandHandler("start", start))
-app.add_handler(CommandHandler("anime", anime))
-app.add_handler(CommandHandler("manga", manga))
-app.add_handler(CommandHandler("season", season))
-app.add_handler(CommandHandler("ban", ban))
 
-
-app.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, welcome))
-
-
-if __name__ == "__main__":
-    app.run_polling()
+app.run_polling()
