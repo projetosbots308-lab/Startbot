@@ -1,6 +1,16 @@
+import os
 import requests
 from telegram import Update
 from telegram.ext import ContextTypes
+
+
+HF_TOKEN = os.getenv("HF_TOKEN")
+
+API_URL = "https://api-inference.huggingface.co/models/google/flan-t5-large"
+
+headers = {
+    "Authorization": f"Bearer {HF_TOKEN}"
+}
 
 
 async def ia(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -13,24 +23,15 @@ async def ia(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     try:
 
-        url = "https://api.popcat.xyz/chatbot"
+        payload = {
+            "inputs": f"Responda em português: {pergunta}"
+        }
 
-        r = requests.get(
-            url,
-            params={
-                "msg": pergunta,
-                "owner": "Otaku",
-                "botname": "Senpai"
-            },
-            timeout=15
-        )
+        r = requests.post(API_URL, headers=headers, json=payload, timeout=30)
 
         data = r.json()
 
-        resposta = data.get("response")
-
-        if not resposta:
-            resposta = "Não consegui responder 😅"
+        resposta = data[0]["generated_text"]
 
         await update.message.reply_text(resposta)
 
@@ -39,5 +40,5 @@ async def ia(update: Update, context: ContextTypes.DEFAULT_TYPE):
         print(e)
 
         await update.message.reply_text(
-            "⚠️ Não consegui acessar a IA agora."
-        )
+            "⚠️ A IA está ocupada agora."
+)
