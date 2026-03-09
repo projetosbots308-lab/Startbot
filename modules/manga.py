@@ -3,14 +3,13 @@ from telegram.ext import ContextTypes
 from services.mal_api import search_manga
 from deep_translator import GoogleTranslator
 
-
 def traduzir(texto):
     try:
         return GoogleTranslator(source="auto", target="pt").translate(texto)
     except:
         return texto
 
-
+# Função usada pelo comando /manga
 async def manga(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if not context.args:
@@ -27,31 +26,30 @@ async def manga(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     manga = data["data"][0]
 
-    titulo = manga["title"]
-    capitulos = manga["chapters"]
-    score = manga["score"]
+    texto = format_manga(manga)
 
-    synopsis = traduzir(manga["synopsis"])
-    synopsis = synopsis[:300] + "..."
+    await update.message.reply_text(texto)
 
-    generos = [g["name"] for g in manga["genres"]]
-    generos = " | ".join([f"#{g}" for g in generos])
 
-    image = manga["images"]["jpg"]["large_image_url"]
+# Função que formata mangá (para uso também no /ia)
+def format_manga(manga):
+    titulo = manga.get("title", "Desconhecido")
+    capitulos = manga.get("chapters", "Desconhecido")
+    score = manga.get("score", "Desconhecido")
+    generos = [g["name"] for g in manga.get("genres", [])]
+    generos = " | ".join([f"#{g}" for g in generos]) if generos else "Desconhecido"
+
+    synopsis = traduzir(manga.get("synopsis", "Sem sinopse"))
+    synopsis = synopsis[:300] + "..." if len(synopsis) > 300 else synopsis
 
     texto = f"""
 📖 {titulo}
 
-📚 GÊNEROS: {generos}
+📚 Gêneros: {generos}
+📑 Capítulos: {capitulos}
+⭐ Nota: {score}
 
-📑 CAPÍTULOS: {capitulos}
-⭐ NOTA: {score}
-
-📝 SINOPSE:
+📝 Sinopse:
 {synopsis}
 """
-
-    await update.message.reply_photo(
-        photo=image,
-        caption=texto
-        )
+    return texto
