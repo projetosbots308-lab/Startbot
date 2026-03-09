@@ -1,22 +1,48 @@
+from deep_translator import GoogleTranslator
+
+def traduzir(texto):
+    try:
+        return GoogleTranslator(source='auto', target='pt').translate(texto)
+    except:
+        return texto
+
+
 def format_anime(anime):
 
-    title = anime["title"]
-    episodes = anime["episodes"]
+    titulo = anime["title"]
+    episodios = anime["episodes"]
     score = anime["score"]
     synopsis = anime["synopsis"]
 
-    genres = [g["name"] for g in anime["genres"]]
-    genres = " | ".join(genres)
+    generos = [g["name"] for g in anime["genres"]]
+    generos = " | ".join([f"#{g}" for g in generos])
 
-    text = f"""
-⭐ {title}
+    studio = "Desconhecido"
+    if anime["studios"]:
+        studio = anime["studios"][0]["name"]
 
-🎭 GÊNEROS: {genres}
-📺 EPISÓDIOS: {episodes}
+    temporada = anime["season"]
+    ano = anime["year"]
+
+    estreia = anime["aired"]["from"][:10]
+
+    synopsis = traduzir(synopsis)
+
+    texto = f"""
+⭐ {titulo}
+
+📚 GÊNEROS: {generos}
+
+🎬 EPISÓDIOS: {episodios}
+📺 TEMPORADA: {temporada} {ano}
+📅 ESTREIA: {estreia}
+
+🏢 ESTÚDIO: #{studio}
+
 ⭐ NOTA: {score}
 
-📖 SINOPSE:
-{synopsis[:400]}...
+📝 SINOPSE:
+{synopsis[:500]}...
 """
 
-    return text
+    return texto
