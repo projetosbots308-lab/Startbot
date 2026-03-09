@@ -13,19 +13,31 @@ async def ia(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     try:
 
+        url = "https://api.popcat.xyz/chatbot"
+
         r = requests.get(
-            "https://api.affiliateplus.xyz/api/chatbot",
+            url,
             params={
-                "message": pergunta,
-                "botname": "Senpai",
-                "ownername": "Otaku"
+                "msg": pergunta,
+                "owner": "Otaku",
+                "botname": "Senpai"
             },
-            timeout=10
+            timeout=15
         )
 
-        resposta = r.json().get("message", "Não consegui responder 😅")
+        data = r.json()
+
+        resposta = data.get("response")
+
+        if not resposta:
+            resposta = "Não consegui responder 😅"
 
         await update.message.reply_text(resposta)
 
-    except:
-        await update.message.reply_text("Erro ao acessar IA.")
+    except Exception as e:
+
+        print(e)
+
+        await update.message.reply_text(
+            "⚠️ Não consegui acessar a IA agora."
+        )
