@@ -1,6 +1,15 @@
 from telegram import Update
 from telegram.ext import ContextTypes
 from services.mal_api import search_manga
+from deep_translator import GoogleTranslator
+
+
+def traduzir(texto):
+    try:
+        return GoogleTranslator(source="auto", target="pt").translate(texto)
+    except:
+        return texto
+
 
 async def manga(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
@@ -18,22 +27,31 @@ async def manga(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     manga = data["data"][0]
 
-    title = manga["title"]
-    chapters = manga["chapters"]
-    synopsis = manga["synopsis"]
+    titulo = manga["title"]
+    capitulos = manga["chapters"]
+    score = manga["score"]
+
+    synopsis = traduzir(manga["synopsis"])
+    synopsis = synopsis[:300] + "..."
+
+    generos = [g["name"] for g in manga["genres"]]
+    generos = " | ".join([f"#{g}" for g in generos])
 
     image = manga["images"]["jpg"]["large_image_url"]
 
-    text = f"""
-📖 {title}
+    texto = f"""
+📖 {titulo}
 
-📚 CAPÍTULOS: {chapters}
+📚 GÊNEROS: {generos}
+
+📑 CAPÍTULOS: {capitulos}
+⭐ NOTA: {score}
 
 📝 SINOPSE:
-{synopsis[:400]}...
+{synopsis}
 """
 
     await update.message.reply_photo(
         photo=image,
-        caption=text
-    )
+        caption=texto
+        )
