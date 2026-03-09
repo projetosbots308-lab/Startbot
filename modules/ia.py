@@ -5,7 +5,7 @@ from telegram.ext import ContextTypes
 from modules.anime import format_anime
 from modules.manga import format_manga
 
-# Função para pegar animes da temporada atual
+# Pega todos os animes da temporada atual
 def get_animes_temporada():
     try:
         r = requests.get("https://api.jikan.moe/v4/seasons/now")
@@ -14,7 +14,7 @@ def get_animes_temporada():
     except:
         return []
 
-# Função para pegar episódios recentes de um anime
+# Pega próximo episódio de um anime e filtra pelo dia de hoje
 def get_proximo_episodio_mal(mal_id):
     try:
         r = requests.get(f"https://api.jikan.moe/v4/anime/{mal_id}/episodes")
@@ -28,7 +28,7 @@ def get_proximo_episodio_mal(mal_id):
     except:
         return None, None
 
-# Função para buscar personagem
+# Busca personagem
 def get_personagem(nome):
     try:
         url = f"https://api.jikan.moe/v4/characters?q={nome}&limit=1"
@@ -40,7 +40,7 @@ def get_personagem(nome):
     except:
         return None
 
-# Função para buscar anime
+# Busca anime
 def get_anime(nome):
     try:
         url = f"https://api.jikan.moe/v4/anime?q={nome}&limit=1"
@@ -52,7 +52,7 @@ def get_anime(nome):
     except:
         return None
 
-# Função para buscar mangá
+# Busca mangá
 def get_manga(nome):
     try:
         url = f"https://api.jikan.moe/v4/manga?q={nome}&limit=1"
@@ -84,7 +84,7 @@ async def ia(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 ep_num, ep_dt = get_proximo_episodio_mal(anime["mal_id"])
                 if ep_num is not None:
                     texto += f"• {anime['title']} - Ep {ep_num}\n"
-                    count +=1
+                    count += 1
             if count == 0:
                 texto += "Nenhum lançamento hoje 😅"
             await update.message.reply_text(texto)
