@@ -11,14 +11,21 @@ async def ia(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("Use: /ia sua pergunta")
         return
 
-    url = "https://api.affiliateplus.xyz/api/chatbot"
+    try:
 
-    r = requests.get(url, params={
-        "message": pergunta,
-        "botname": "Senpai",
-        "ownername": "Otaku"
-    })
+        r = requests.get(
+            "https://api.affiliateplus.xyz/api/chatbot",
+            params={
+                "message": pergunta,
+                "botname": "Senpai",
+                "ownername": "Otaku"
+            },
+            timeout=10
+        )
 
-    resposta = r.json()["message"]
+        resposta = r.json().get("message", "Não consegui responder 😅")
 
-    await update.message.reply_text(resposta)
+        await update.message.reply_text(resposta)
+
+    except:
+        await update.message.reply_text("Erro ao acessar IA.")
