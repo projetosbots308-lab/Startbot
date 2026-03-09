@@ -5,119 +5,141 @@ from telegram.ext import ContextTypes
 from modules.anime import format_anime
 from modules.manga import format_manga
 
-# Funções de busca
-def get_animes_temporada():
+# busca anime pelo nome
+def get_anime(nome):
+    try:
+        url = f"https://api.jikan.moe/v4/anime?q={nome}&limit=1"
+        r = requests.get(url)
+        data = r.json()
+        if data["data"]:
+            return data["data"][0]
+        return None
+    except:
+        return None
+
+# busca recomendações
+def get_animes_parecidos(mal_id):
+    try:
+        r = requests.get(f"https://api.jikan.moe/v4/anime/{mal_id}/recommendations")
+        data = r.json().get("data", [])
+        return [x["entry"]["title"] for x in data][:5]
+    except:
+        return []
+
+# busca personagem pelo nome
+def get_personagem(nome):
+    try:
+        url = f"https://api.jikan.moe/v4/characters?q={nome}&limit=1"
+        r = requests.get(url)
+        data = r.json()
+        if data["data"]:
+            return data["data"][0]
+        return None
+    except:
+        return None
+
+# pega lista da temporada atual
+def get_temporada_atual():
     try:
         r = requests.get("https://api.jikan.moe/v4/seasons/now")
         return r.json().get("data", [])
     except:
         return []
 
-def get_proximo_episodio_mal(mal_id):
-    try:
-        r = requests.get(f"https://api.jikan.moe/v4/anime/{mal_id}/episodes")
-        for ep in r.json().get("data", []):
-            if ep["aired"] is not None:
-                dt = datetime.fromisoformat(ep["aired"].replace("Z",""))
-                if dt.date() == datetime.today().date():
-                    return ep["episode"]
-        return None
-    except:
-        return None
-
-def get_personagem(nome):
-    try:
-        url = f"https://api.jikan.moe/v4/characters?q={nome}&limit=1"
-        r = requests.get(url)
-        data = r.json()
-        if data.get("data"):
-            return data["data"][0]
-        return None
-    except:
-        return None
-
-def get_anime(nome):
-    try:
-        url = f"https://api.jikan.moe/v4/anime?q={nome}&limit=1"
-        r = requests.get(url)
-        data = r.json()
-        if data.get("data"):
-            return data["data"][0]
-        return None
-    except:
-        return None
-
-def get_manga(nome):
-    try:
-        url = f"https://api.jikan.moe/v4/manga?q={nome}&limit=1"
-        r = requests.get(url)
-        data = r.json()
-        if data.get("data"):
-            return data["data"][0]
-        return None
-    except:
-        return None
-
-# Comando /ia
+# comando principal
 async def ia(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
     pergunta = " ".join(context.args).lower().strip()
 
     if not pergunta:
-        await update.message.reply_text("Use: /ia sua pergunta")
+        await update.message.reply_text("❗ Use: /ia sua pergunta")
         return
 
     try:
-        # Lançamentos de hoje
-        if any(x in pergunta for x in ["lançamento", "episódio hoje", "hoje"]):
-            animes = get_animes_temporada()
-            texto = f"📅 Lançamentos de hoje ({datetime.today().date()}):\n\n"
-            count = 0
-            for anime in animes:
-                ep_num = get_proximo_episodio_mal(anime["mal_id"])
-                if ep_num:
-                    texto += f"• {anime['title']} - Ep {ep_num}\n"
-                    count += 1
-            if count == 0:
-                texto += "Nenhum lançamento hoje 😅"
-            await update.message.reply_text(texto)
+
+        ####################
+        #  Animes parecidos #
+        ####################
+        if "parecido" in pergunta or "semelhante" in pergunta:
+            # extrai nome depois da expressão
+            nome = pergunta.replace("animes parecidos com", "").replace("parecido com", "").strip()
+            anime_data = get_anime(nome)
+
+            if anime_data:
+                mal_id = anime_data["mal_id"]
+                lista = get_animes_parecidos(mal_id)
+
+                if lista:
+                    texto = f"🎬 Animes parecidos com **{anime_data['title']}**:\n"
+                    texto += "\n".join([f"• {a}" for a in lista])
+                    await update.message.reply_text(texto)
+                    return
+
+            await update.message.reply_text("😅 Não encontrei animes parecidos.")
             return
 
-        # Pergunta sobre personagem
+        ####################
+        #  Lançamentos da temporada #
+        ####################
+        if any(x in pergunta for x in ["lançamentos", "animes da temporada", "próximos episódios"]):
+            season_list = get_temporada_atual()
+
+            if season_list:
+                texto = "📅 Animes na temporada atual:\n"
+                for a in season_list[:10]:
+                    texto += f"• {a['title']}\n"
+                await update.message.reply_text(texto)
+                return
+            else:
+                await update.message.reply_text("😅 Não consegui obter a temporada.")
+                return
+
+        ####################
+        #  Personagem
+        ####################
         if "quem é" in pergunta or "personagem" in pergunta:
             nome = pergunta.replace("quem é", "").replace("personagem", "").strip()
             char = get_personagem(nome)
+
             if char:
-                about = char.get("about", "Sem descrição.")
+                about = char.get("about") or "Sem descrição."
                 texto = f"👤 {char['name']}\n\n{about[:400]}..."
                 await update.message.reply_text(texto)
                 return
             else:
-                await update.message.reply_text("Personagem não encontrado.")
+                await update.message.reply_text("😅 Personagem não encontrado.")
                 return
 
-        # Anime específico
+        ####################
+        #  Anime específico #
+        ####################
         anime_data = get_anime(pergunta)
         if anime_data:
             texto = format_anime(anime_data)
             await update.message.reply_text(texto)
             return
 
-        # Mangá específico
+        ####################
+        #  Mangá específico #
+        ####################
         manga_data = get_manga(pergunta)
         if manga_data:
             texto = format_manga(manga_data)
             await update.message.reply_text(texto)
             return
 
-        # Pergunta fora do contexto
-        await update.message.reply_text(
-            "🤔 Ainda não sei a resposta. Posso responder sobre:\n"
-            "- Lançamentos de animes hoje\n"
-            "- Informações de animes\n"
-            "- Informações de mangás\n"
-            "- Personagens\n"
-            "Tente perguntar algo dentro do mundo otaku."
+        ####################
+        #  Fallback
+        ####################
+        fallback = (
+            "🤔 Não encontrei resposta para isso.\n"
+            "Posso ajudar com:\n"
+            "- Animes parecidos (ex: ‘quais são animes parecidos com Naruto’)\n"
+            "- Lançamentos da temporada atual\n"
+            "- Informações de anime/mangá\n"
+            "- Personagens"
         )
+        await update.message.reply_text(fallback)
 
     except Exception as e:
         print(e)
