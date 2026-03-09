@@ -3,6 +3,7 @@ from telegram.ext import ContextTypes
 from services.mal_api import search_anime
 from utils.formatters import format_anime
 
+
 async def anime(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if not context.args:
@@ -25,5 +26,6 @@ async def anime(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_photo(
         photo=image,
-        caption=caption
+        caption=caption,
+        parse_mode="HTML"
     )
